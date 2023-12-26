@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/yozel/tellme"
@@ -21,40 +20,23 @@ var (
 )
 
 func prepare() {
-	// flag.StringVar(&telegramToken, "telegram-token", "", "telegram bot token")
-	// flag.Int64Var(&telegramChatID, "telegram-chat-id", 0, "telegram chat id")
-	// required := []string{"telegram-token", "telegram-chat-id"}
+	flag.StringVar(&telegramToken, "telegram-token", "", "telegram bot token")
+	flag.Int64Var(&telegramChatID, "telegram-chat-id", 0, "telegram chat id")
+	required := []string{"telegram-token", "telegram-chat-id"}
 	flag.Parse()
 
-	// seen := make(map[string]bool)
-	// flag.Visit(func(f *flag.Flag) { seen[f.Name] = true })
-	// msgs := []string{}
-	// for _, req := range required {
-	// 	if !seen[req] {
-	// 		msgs = append(msgs, fmt.Sprintf("missing required -%s argument/flag\n", req))
-	// 	}
-	// }
-	// if len(msgs) > 0 {
-	// 	for _, msg := range msgs {
-	// 		fmt.Fprintf(os.Stderr, msg)
-	// 	}
-	// 	os.Exit(2)
-	// }
-	var err error
-	var ok bool
-	telegramToken, ok = os.LookupEnv("TELEGRAM_TOKEN")
-	if !ok {
-		fmt.Fprintf(os.Stderr, "missing required TELEGRAM_TOKEN environment variable\n")
-		os.Exit(2)
+	seen := make(map[string]bool)
+	flag.Visit(func(f *flag.Flag) { seen[f.Name] = true })
+	msgs := []string{}
+	for _, req := range required {
+		if !seen[req] {
+			msgs = append(msgs, fmt.Sprintf("missing required -%s argument/flag\n", req))
+		}
 	}
-	telegramChatIDStr, ok := os.LookupEnv("TELEGRAM_CHAT_ID")
-	if !ok {
-		fmt.Fprintf(os.Stderr, "missing required TELEGRAM_CHAT_ID environment variable\n")
-		os.Exit(2)
-	}
-	telegramChatID, err = strconv.ParseInt(telegramChatIDStr, 10, 64)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "TELEGRAM_CHAT_ID must be integer\n")
+	if len(msgs) > 0 {
+		for _, msg := range msgs {
+			fmt.Fprintf(os.Stderr, msg)
+		}
 		os.Exit(2)
 	}
 
