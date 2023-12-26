@@ -9,36 +9,36 @@ import (
 	"syscall"
 
 	"github.com/yozel/tellme"
+	"github.com/yozel/tellme/pkg/configure"
 )
 
 var (
-	telegramToken  string
-	telegramChatID int64
+	conf = &Configuration{}
 
 	cmd  string
 	args []string
 )
 
-func prepare() {
-	flag.StringVar(&telegramToken, "telegram-token", "", "telegram bot token")
-	flag.Int64Var(&telegramChatID, "telegram-chat-id", 0, "telegram chat id")
-	required := []string{"telegram-token", "telegram-chat-id"}
-	flag.Parse()
+type Configuration struct {
+	TelegramToken  string `configure:"name:telegram-token;env:TELEGRAM_TOKEN;default:;usage:telegram bot token;required:true"`
+	TelegramChatID int64  `configure:"name:telegram-chat-id;env:TELEGRAM_CHAT_ID;default:;usage:telegram chat id;required:true"`
+}
 
-	seen := make(map[string]bool)
-	flag.Visit(func(f *flag.Flag) { seen[f.Name] = true })
-	msgs := []string{}
-	for _, req := range required {
-		if !seen[req] {
-			msgs = append(msgs, fmt.Sprintf("missing required -%s argument/flag\n", req))
-		}
+// func main() {
+// 	conf := &Configuration{}
+// 	err := Parse(conf)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// })
+
+func prepare() {
+	err := configure.Parse(conf)
+	if err != nil {
+		panic(err)
 	}
-	if len(msgs) > 0 {
-		for _, msg := range msgs {
-			fmt.Fprintf(os.Stderr, msg)
-		}
-		os.Exit(2)
-	}
+
+	// flag.Parse()
 
 	if flag.NArg() < 1 {
 		fmt.Fprintf(os.Stderr, "missing required command\n")
@@ -52,8 +52,8 @@ func main() {
 	prepare()
 
 	factory := tellme.TeeCmdFactory{
-		TelegramToken:  telegramToken,
-		TelegramChatID: telegramChatID,
+		TelegramToken:  conf.TelegramToken,
+		TelegramChatID: conf.TelegramChatID,
 	}
 
 	cmd := factory.NewTeeCmd(cmd, args...)

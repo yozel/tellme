@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
+
+	md "github.com/go-spectest/markdown"
 )
 
 type TeeCmdFactory struct {
@@ -59,18 +61,29 @@ func (c *Cmd) RenderResult() (string, error) {
 		return "", err
 	}
 
-	doc := &Document{}
-	doc = doc.Normal("Command:\n").Code("sh", c.Cmd.String()).Normal("\n")
-	doc = doc.Normal("Output:\n").Code("text", string(stdallByte)).Normal("\n")
-	doc = doc.Normal("Exit code: ").InlineCode("%d", c.Cmd.ProcessState.ExitCode()).Normal("\n")
-	doc = doc.Normal("Received signal: ").InlineCode("%d", status.Signal()).Normal("\n")
-	return doc.String(), nil
+	docStr := &strings.Builder{}
+	doc := md.NewMarkdown(docStr)
+	err = doc.PlainText("Command:").
+		CodeBlocks(md.SyntaxHighlightShell, c.Cmd.String()).
+		PlainText("Output:").
+		CodeBlocks(md.SyntaxHighlightText, string(stdallByte)).
+		PlainTextf("Exit code: %s", md.Code(fmt.Sprintf("%d", c.Cmd.ProcessState.ExitCode()))).
+		PlainTextf("Received signal: %s", md.Code(fmt.Sprintf("%d", int(status.Signal())))).
+		Build()
+	if err != nil {
+		return "", err
+	}
+
+	// doc := &Document{}
+	// doc = doc.Normal("Command:\n").Code("sh", c.Cmd.String()).Normal("\n")
+	// doc = doc.Normal("Output:\n").Code("text", string(stdallByte)).Normal("\n")
+	// doc = doc.Normal("Exit code: ").InlineCode("%d", c.Cmd.ProcessState.ExitCode()).Normal("\n")
+	// doc = doc.Normal("Received signal: ").InlineCode("%d", status.Signal()).Normal("\n")
+	return docStr.String(), nil
 }
 
 func (c *Cmd) Run() {
 	c.Err = c.Cmd.Run()
-	log.Printf("Command: %s", c.Cmd.String())
-	log.Printf("Exit code: %s", c.Err)
 }
 
 func (c *Cmd) SendNotification() error {

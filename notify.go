@@ -7,8 +7,6 @@ import (
 )
 
 func SendNotification(telegramToken string, chatID int64, message string) error {
-	fmt.Printf("Sending notification to %d: %s", chatID, message)
-	// // return nil
 	url := url.URL{
 		Scheme: "https",
 		Host:   "api.telegram.org",
