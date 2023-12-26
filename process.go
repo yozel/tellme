@@ -8,8 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
-
-	"github.com/yozel/tellme/internal/markdown"
 )
 
 type TeeCmdFactory struct {
@@ -61,7 +59,7 @@ func (c *Cmd) RenderResult() (string, error) {
 		return "", err
 	}
 
-	doc := &markdown.Document{}
+	doc := &Document{}
 	doc = doc.Normal("Command:\n").Code("sh", c.Cmd.String()).Normal("\n")
 	doc = doc.Normal("Output:\n").Code("text", string(stdallByte)).Normal("\n")
 	doc = doc.Normal("Exit code: ").InlineCode("%d", c.Cmd.ProcessState.ExitCode()).Normal("\n")
